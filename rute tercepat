@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AR Rute Kereta</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+        body { margin: 0; }
+        #info { position: absolute; top: 10px; left: 10px; color: white; }
+    </style>
+</head>
+<body style="margin: 0; overflow: hidden;">
+    <div id="info">
+        <h2>AR Rute Kereta</h2>
+        <p>Menemukan rute tercepat dari Stasiun A ke Stasiun E!</p>
+    </div>
+
+    <a-scene embedded arjs='sourceType: webcam;'>
+        <!-- Marker untuk AR -->
+        <a-marker preset="hiro">
+            <!-- Menampilkan informasi rute -->
+            <a-box position='0 0.5 0' material='color: red;'></a-box>
+            <a-text value="Rute Tercepat" position='0 1 0' color='white'></a-text>
+        </a-marker>
+
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        // Data graf untuk algoritma Dijkstra
+        const graph = {
+            'Stasiun A': {'Stasiun B': 5, 'Stasiun C': 10},
+            'Stasiun B': {'Stasiun D': 3, 'Stasiun E': 2},
+            'Stasiun C': {'Stasiun D': 1},
+            'Stasiun D': {'Stasiun E': 4},
+            'Stasiun E': {}
+        };
+
+        function dijkstra(graph, start) {
+            let distances = {};
+            let visited = new Set();
+            let priorityQueue = new PriorityQueue();
+
+            for (let vertex in graph) {
+                distances[vertex] = Infinity;
+            }
+            distances[start] = 0;
+            priorityQueue.enqueue(start, 0);
+
+            while (!priorityQueue.isEmpty()) {
+                let currentVertex = priorityQueue.dequeue().element;
+
+                if (!visited.has(currentVertex)) {
+                    visited.add(currentVertex);
+
+                    for (let neighbor in graph[currentVertex]) {
+                        let distance = graph[currentVertex][neighbor];
+                        let newDistance = distances[currentVertex] + distance;
+
+                        if (newDistance < distances[neighbor]) {
+                            distances[neighbor] = newDistance;
+                            priorityQueue.enqueue(neighbor, newDistance);
+                        }
+                    }
+                }
+            }
+            return distances;
+        }
+
+        class PriorityQueue {
+            constructor() {
+                this.items = [];
+            }
+
+            enqueue(element, priority) {
+                this.items.push({element, priority});
+                this.items.sort((a, b) => a.priority - b.priority);
+            }
+
+            dequeue() {
+                return this.items.shift();
+            }
+
+            isEmpty() {
+                return this.items.length === 0;
+            }
+        }
+
+        // Menjalankan algoritma Dijkstra
+        const shortestPaths = dijkstra(graph, 'Stasiun A');
+        console.log(shortestPaths);
+    </script>
+</body>
+</html>
